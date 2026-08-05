@@ -184,8 +184,10 @@ export function InboxPage() {
       setPassword("");
     } catch (requestError) {
       setLoginError(
+        // Khong nhac .env.local: tren ban deploy thi mat khau la secret cua Worker,
+        // noi ".env.local" o do la chi sai cho.
         requestError instanceof ConversationError && requestError.message === "ADMIN_NOT_CONFIGURED"
-          ? "Chưa đặt ADMIN_PASSWORD trong .env.local."
+          ? "Máy chủ chưa cấu hình mật khẩu quản trị (ADMIN_PASSWORD)."
           : "Mật khẩu không đúng.",
       );
     } finally {
