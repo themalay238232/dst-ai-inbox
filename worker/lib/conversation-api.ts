@@ -231,6 +231,9 @@ export async function handleConversationApi(
       return json({
         conversations: items,
         messengerConfigured: messengerReady(env),
+        // Duong goi sang worker Messenger: "binding" (ban deploy) hay "http" (local).
+        // Bay ra day de chan doan duoc ma khong phai doc log Worker.
+        messengerTransport: env.MESSENGER ? "binding" : "http",
         ...(messengerError ? { messengerError } : {}),
       });
     }

@@ -102,9 +102,16 @@ export default defineConfig(async ({ command, mode }) => {
         // `vars` di thang vao cau hinh Worker duoi dang bien THUONG, tuc khoa va mat
         // khau se hien ro trong dashboard Cloudflare va nam trong dist/ tren dia.
         // Tren ban deploy, dung `wrangler secret put` de chung la secret that.
+        // Service binding sang worker Messenger CHI dat o ban deploy: Cloudflare chan
+        // Worker goi HTTP sang Worker khac cung zone (error 1042). O local thi nguoc
+        // lai — khai binding nay se lam miniflare di tim mot worker cuc bo khong ton
+        // tai, nen local van goi HTTP thuong.
         config: command === "serve"
           ? { ...localBindingConfig, vars: serverVars(mode) }
-          : localBindingConfig,
+          : {
+            ...localBindingConfig,
+            services: [{ binding: "MESSENGER", service: "dst-group-messenger-ai" }],
+          },
       }),
     ],
   };

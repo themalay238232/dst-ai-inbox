@@ -20,6 +20,8 @@ interface Env {
   /** Worker Messenger da co san cua DST, dung de gop hoi thoai Messenger vao hop thu. */
   MESSENGER_WORKER_URL?: string;
   MESSENGER_ADMIN_TOKEN?: string;
+  /** Service binding sang worker Messenger, chi co tren ban deploy. */
+  MESSENGER?: Fetcher;
   META_PAGE_ACCESS_TOKEN?: string;
   META_APP_SECRET?: string;
   META_VERIFY_TOKEN?: string;

@@ -14,6 +14,14 @@ import type { ConversationMessage, ConversationSummary } from "./conversation-st
 export type MessengerEnv = {
   MESSENGER_WORKER_URL?: string;
   MESSENGER_ADMIN_TOKEN?: string;
+  /**
+   * Service binding sang worker Messenger. CHI co tren ban deploy.
+   *
+   * Ly do phai co: Cloudflare CHAN mot Worker goi HTTP sang Worker khac cung zone
+   * (`*.workers.dev`) — tra ve `error code: 1042`. Chay local thi khong dinh vi may
+   * khong nam trong zone do, nen loi chi lo ra sau khi deploy.
+   */
+  MESSENGER?: { fetch(request: Request): Promise<Response> };
 };
 
 /** Ma hoi thoai Messenger duoc gan tien to de dinh tuyen khong nham voi hoi thoai web. */
@@ -48,6 +56,16 @@ export function isMessengerId(id: string) {
 
 export function toRemoteId(id: string) {
   return id.slice(PREFIX.length);
+}
+
+/**
+ * Mot cua duy nhat de goi sang worker Messenger.
+ * Uu tien service binding (ban deploy), rot ve fetch thuong (ban local).
+ */
+function callMessenger(env: MessengerEnv, path: string, init: RequestInit = {}) {
+  const url = `${env.MESSENGER_WORKER_URL}${path}`;
+  const request = new Request(url, { ...init, headers: headers(env) });
+  return env.MESSENGER ? env.MESSENGER.fetch(request) : fetch(request);
 }
 
 function headers(env: MessengerEnv) {
@@ -86,10 +104,20 @@ function mapMessage(message: RemoteMessage): ConversationMessage {
  */
 export async function listMessengerConversations(env: MessengerEnv): Promise<ConversationSummary[]> {
   if (!messengerConfigured(env)) return [];
-  const response = await fetch(`${env.MESSENGER_WORKER_URL}/api/admin/inbox`, {
-    headers: headers(env),
-  });
-  if (!response.ok) throw new Error(`messenger inbox failed: ${response.status}`);
+  let response: Response;
+  try {
+    response = await callMessenger(env, "/api/admin/inbox");
+  } catch (error) {
+    // Ghi ly do THAT ra log. Loi o day thuong khong phai sai the ma la rang buoc cua
+    // nen tang (vi du Worker khong duoc goi Worker khac cung zone).
+    console.error(`[messenger] inbox fetch loi: ${String(error).slice(0, 300)}`);
+    throw error;
+  }
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => "")).slice(0, 300);
+    console.error(`[messenger] inbox ${response.status} ${detail}`);
+    throw new Error(`messenger inbox failed: ${response.status}`);
+  }
   const data = (await response.json()) as { conversations?: RemoteSummary[] };
   return (data.conversations ?? [])
     // CHI lay hoi thoai Messenger that. Hoi thoai "web" ben do la cua he thong chat
@@ -114,10 +142,8 @@ export async function listMessengerConversations(env: MessengerEnv): Promise<Con
 
 export async function readMessengerConversation(env: MessengerEnv, conversationId: string) {
   if (!messengerConfigured(env)) return null;
-  const url = new URL(`${env.MESSENGER_WORKER_URL}/api/admin/conversation`);
-  url.searchParams.set("channel", "messenger");
-  url.searchParams.set("id", toRemoteId(conversationId));
-  const response = await fetch(url.toString(), { headers: headers(env) });
+  const query = new URLSearchParams({ channel: "messenger", id: toRemoteId(conversationId) });
+  const response = await callMessenger(env, `/api/admin/conversation?${query}`);
   if (!response.ok) return null;
   const data = (await response.json()) as {
     conversation?: RemoteSummary & { messages?: RemoteMessage[] };
@@ -147,9 +173,8 @@ export async function replyOnMessenger(
   text: string,
 ): Promise<void> {
   if (!messengerConfigured(env)) throw new Error("MESSENGER_NOT_CONNECTED");
-  const response = await fetch(`${env.MESSENGER_WORKER_URL}/api/admin/reply`, {
+  const response = await callMessenger(env, "/api/admin/reply", {
     method: "POST",
-    headers: headers(env),
     body: JSON.stringify({ participantId, text }),
   });
   if (!response.ok) {

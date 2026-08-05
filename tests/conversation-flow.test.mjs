@@ -250,8 +250,9 @@ test("Messenger: qua 24 gio ke tu tin cuoi cua khach thi chan gui, khong goi Sen
   const goc = globalThis.fetch;
   const daGoi = [];
   const cuTuanTruoc = new Date(Date.now() - 14 * 24 * 3600_000).toISOString();
-  globalThis.fetch = async (url, init) => {
-    const href = String(url);
+  globalThis.fetch = async (input) => {
+    // callMessenger truyen mot doi tuong Request, khong phai chuoi URL.
+    const href = typeof input === "string" ? input : input.url;
     daGoi.push(href);
     if (href.includes("/api/admin/conversation")) {
       return new Response(JSON.stringify({
@@ -262,7 +263,7 @@ test("Messenger: qua 24 gio ke tu tin cuoi cua khach thi chan gui, khong goi Sen
         },
       }), { status: 200 });
     }
-    return new Response(JSON.stringify({ ok: true }), { status: 200, ...init });
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
   };
 
   try {
@@ -291,8 +292,8 @@ test("Messenger: trong 24 gio thi gui that qua Send API", async () => {
   const goc = globalThis.fetch;
   const daGoi = [];
   const vuaXong = new Date(Date.now() - 60_000).toISOString();
-  globalThis.fetch = async (url) => {
-    const href = String(url);
+  globalThis.fetch = async (input) => {
+    const href = typeof input === "string" ? input : input.url;
     daGoi.push(href);
     if (href.includes("/api/admin/conversation")) {
       return new Response(JSON.stringify({
