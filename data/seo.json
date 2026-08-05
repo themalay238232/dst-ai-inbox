@@ -1,0 +1,86 @@
+{
+  "/": {
+    "title": "DST Group | Marketing, Media & Branding",
+    "description": "DST Group đồng hành từ chiến lược, nội dung và quảng cáo đến sản xuất hình ảnh và xây dựng thương hiệu."
+  },
+  "/gioi-thieu": {
+    "title": "Giới thiệu DST Group | Marketing, Media & Branding",
+    "description": "Tìm hiểu định hướng, giá trị và cách DST Group phối hợp cùng doanh nghiệp."
+  },
+  "/dich-vu": {
+    "title": "Dịch vụ DST Group | Marketing, Media, Branding",
+    "description": "Khám phá các nhóm dịch vụ Marketing, Media, Branding, Website, Truyền thông và Tổ chức sự kiện của DST Group."
+  },
+  "/dich-vu/marketing": {
+    "title": "Marketing & Quảng cáo | DST Group",
+    "description": "Tổ chức chiến lược, nội dung và quảng cáo theo mục tiêu kinh doanh cùng phạm vi triển khai rõ ràng."
+  },
+  "/dich-vu/media": {
+    "title": "Media & Sản xuất nội dung | DST Group",
+    "description": "Sản xuất ảnh, video và tư liệu truyền thông phục vụ các điểm chạm thương hiệu."
+  },
+  "/dich-vu/branding": {
+    "title": "Branding & Nhận diện | DST Group",
+    "description": "Định hướng và xây dựng hệ thống nhận diện thương hiệu có khả năng ứng dụng."
+  },
+  "/dich-vu/thiet-ke-website": {
+    "title": "Thiết kế Website | DST Group",
+    "description": "Thiết kế website và landing page theo cấu trúc nội dung rõ ràng, responsive và dễ sử dụng."
+  },
+  "/dich-vu/truyen-thong": {
+    "title": "Truyền thông & Nội dung | DST Group",
+    "description": "Xây dựng kế hoạch truyền thông, nội dung và thông điệp nhất quán theo từng giai đoạn."
+  },
+  "/dich-vu/to-chuc-su-kien": {
+    "title": "Tổ chức sự kiện | DST Group",
+    "description": "Lập kế hoạch, sản xuất và truyền thông cho các hoạt động sự kiện và ra mắt thương hiệu."
+  },
+  "/du-an": {
+    "title": "Dự án | DST Group",
+    "description": "Thông tin về cách DST Group tổ chức phạm vi và triển khai dự án theo từng bối cảnh hợp tác."
+  },
+  "/tin-tuc": {
+    "title": "Tin tức & Góc nhìn | DST Group",
+    "description": "Bài viết về Marketing, Website, Media, Branding, TikTok Shop và truyền thông sự kiện."
+  },
+  "/tin-tuc/xay-dung-ke-hoach-marketing-tu-muc-tieu-kinh-doanh": {
+    "title": "Xây dựng kế hoạch marketing từ mục tiêu kinh doanh | DST Group",
+    "description": "Một số nguyên tắc giúp bắt đầu kế hoạch marketing từ ưu tiên kinh doanh."
+  },
+  "/tin-tuc/website-doanh-nghiep-can-co-cau-truc-noi-dung-nao": {
+    "title": "Website doanh nghiệp nên bắt đầu từ cấu trúc nào? | DST Group",
+    "description": "Góc nhìn về cách tổ chức cấu trúc nội dung website doanh nghiệp."
+  },
+  "/tin-tuc/quy-trinh-san-xuat-video-thuong-hieu": {
+    "title": "Quy trình sản xuất video thương hiệu | DST Group",
+    "description": "Tổng quan quy trình video từ brief đến bàn giao."
+  },
+  "/tin-tuc/khi-nao-doanh-nghiep-can-lam-moi-nhan-dien": {
+    "title": "Khi nào doanh nghiệp cần làm mới nhận diện? | DST Group",
+    "description": "Những thời điểm doanh nghiệp nên rà soát hệ thống nhận diện thương hiệu."
+  },
+  "/tin-tuc/noi-dung-tiktok-shop-can-phoi-hop-voi-van-hanh": {
+    "title": "Nội dung TikTok Shop và vận hành | DST Group",
+    "description": "Góc nhìn về sự phối hợp giữa nội dung, gian hàng và vận hành."
+  },
+  "/tin-tuc/truyen-thong-su-kien-khong-chi-la-ngay-dien-ra": {
+    "title": "Truyền thông sự kiện không chỉ là ngày diễn ra | DST Group",
+    "description": "Cách nhìn về truyền thông trước, trong và sau sự kiện."
+  },
+  "/tuyen-dung": {
+    "title": "Tuyển dụng | DST Group",
+    "description": "Khám phá môi trường và văn hóa làm việc tại DST Group."
+  },
+  "/lien-he": {
+    "title": "Liên hệ DST Group | Nhận tư vấn",
+    "description": "Liên hệ DST Group qua biểu mẫu tư vấn, điện thoại, email hoặc Zalo."
+  },
+  "/chinh-sach-bao-mat": {
+    "title": "Chính sách bảo mật | DST Group",
+    "description": "Thông tin về nguyên tắc xử lý dữ liệu liên hệ trên website DST Group."
+  },
+  "/dieu-khoan-su-dung": {
+    "title": "Điều khoản sử dụng | DST Group",
+    "description": "Điều khoản sử dụng nội dung và biểu mẫu trên website DST Group."
+  }
+}
