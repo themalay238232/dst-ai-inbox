@@ -21,7 +21,9 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
  */
 const CONVERSATION_KV = {
   binding: "CONVERSATIONS",
-  id: "dst_conversations_local",
+  // Namespace that tren tai khoan Cloudflare. O local, plugin dung KV mo phong theo
+  // ten binding nen id nay khong anh huong gi; khi deploy thi phai la id that.
+  id: "8d81596c470148e3b7a6922077d6cd6a",
 };
 
 const localBindingConfig = {
@@ -77,7 +79,7 @@ function serverVars(mode: string): Record<string, string> {
   return vars;
 }
 
-export default defineConfig(async ({ mode }) => {
+export default defineConfig(async ({ command, mode }) => {
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= "false";
@@ -96,7 +98,13 @@ export default defineConfig(async ({ mode }) => {
       sites(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
-        config: { ...localBindingConfig, vars: serverVars(mode) },
+        // CHI nap `.env.local` khi chay dev. Luc build de deploy thi khong duoc:
+        // `vars` di thang vao cau hinh Worker duoi dang bien THUONG, tuc khoa va mat
+        // khau se hien ro trong dashboard Cloudflare va nam trong dist/ tren dia.
+        // Tren ban deploy, dung `wrangler secret put` de chung la secret that.
+        config: command === "serve"
+          ? { ...localBindingConfig, vars: serverVars(mode) }
+          : localBindingConfig,
       }),
     ],
   };
