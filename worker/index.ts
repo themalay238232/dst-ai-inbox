@@ -8,12 +8,16 @@ import { DST_SYSTEM_PROMPT } from "../app/lib/dst-knowledge.ts";
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  /** Workers AI: chay tren Cloudflare nen khong dinh chan vi tri nhu Gemini. */
+  AI?: { run(model: string, input: { messages: Array<{ role: string; content: string }>; max_tokens?: number; temperature?: number }): Promise<{ response?: string; choices?: Array<{ message?: { content?: string } }> }> };
   /** Kho hoi thoai dung chung cho chat khach va hop thu quan tri. */
   CONVERSATIONS: KVNamespace;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
   GEMINI_API_KEY?: string;
   GEMINI_MODEL?: string;
+  /** Doi model Workers AI ma khong phai sua code. */
+  WORKERS_AI_MODEL?: string;
   /** Bot DST da deploy san (ai-chat-worker). Dung khi chua cau hinh khoa rieng. */
   DST_BOT_URL?: string;
   ADMIN_PASSWORD?: string;
@@ -44,6 +48,38 @@ type ServiceContext = {
   description?: string;
   deliverables?: unknown;
 };
+
+/**
+ * Gemini tu choi request theo VI TRI may goi ("User location is not supported for
+ * the API use"). Ket qua khong doi giua cac request tren cung mot may chu, nen ghi
+ * nho lai trong isolate de khoi thu lai va cham moi cau tra loi vai giay.
+ */
+let geminiBlockedHere = false;
+
+/** Khoa KV ghi nho viec Gemini chan vi tri may chu. Co han 1 ngay de tu khoi phuc
+ *  neu Google mo lai khu vuc, thay vi tat Gemini vinh vien. */
+const GEMINI_BLOCKED_KEY = "ai:gemini-blocked";
+const GEMINI_BLOCKED_TTL = 86_400;
+
+/** Doc co mot lan cho moi isolate; cac request sau dung lai ket qua trong bo nho. */
+async function loadGeminiBlocked(env: Env) {
+  if (geminiBlockedHere || !env.CONVERSATIONS) return geminiBlockedHere;
+  try {
+    geminiBlockedHere = (await env.CONVERSATIONS.get(GEMINI_BLOCKED_KEY, "text")) === "1";
+  } catch {
+    // Doc that bai thi coi nhu chua chan, cung lam gi hon duoc.
+  }
+  return geminiBlockedHere;
+}
+
+async function markGeminiBlocked(env: Env) {
+  geminiBlockedHere = true;
+  try {
+    await env.CONVERSATIONS?.put(GEMINI_BLOCKED_KEY, "1", { expirationTtl: GEMINI_BLOCKED_TTL });
+  } catch {
+    // Khong ghi duoc thi van con co trong bo nho cua isolate nay.
+  }
+}
 
 const PRODUCTION_ORIGIN = "https://theluc205.github.io";
 
@@ -181,6 +217,8 @@ async function callGemini(env: Env, messages: Array<{ role: string; content: str
     // khoa: chi lay phan mo ta loi cua Google, du de biet la sai khoa hay sai model.
     const detail = (await response.text().catch(() => "")).slice(0, 400);
     console.error(`[gemini] ${response.status} model=${model} ${detail}`);
+    // Chan theo vi tri thi lan sau khong thu nua — xem chu thich o geminiBlockedHere.
+    if (/User location is not supported/i.test(detail)) await markGeminiBlocked(env);
     // 404 = ten model khong con ton tai. Liet ke model dang dung duoc ra log de biet
     // dien gi vao GEMINI_MODEL, thay vi phai doan.
     if (response.status === 404) {
@@ -211,6 +249,37 @@ async function callGemini(env: Env, messages: Array<{ role: string; content: str
  * Tra ve null khi chua cau hinh nha cung cap nao — phia goi phai noi that, khong duoc
  * thay bang cau mau.
  */
+/** Workers AI chay ngay tren Cloudflare nen khong bi chan theo vi tri. */
+async function callWorkersAi(
+  env: Env,
+  messages: Array<{ role: string; content: string }>,
+  pageContext: string,
+  serviceContext: string,
+) {
+  // KHONG dung glm-4.7-flash: no la model CO SUY LUAN, token suy luan tinh vao
+  // max_tokens (dat 512 thi cau tra loi rong — giong het chuyen da gap voi Gemini
+  // 2.5+), va do thuc te moi cau mat 26-43 giay. Llama 3.3 70B fp8-fast khong suy
+  // luan, Cloudflare toi uu san cho toc do.
+  const model = env.WORKERS_AI_MODEL || "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+  const result = await env.AI!.run(model, {
+    max_tokens: 512,
+    temperature: 0.4,
+    messages: [
+      { role: "system", content: `${DST_SERVICE_CONTEXT}\n${contextForPrompt(pageContext, serviceContext)}` },
+      ...messages,
+    ],
+  });
+  return result.response?.trim() || result.choices?.[0]?.message?.content?.trim() || null;
+}
+
+/**
+ * Thu lan luot cac nha cung cap, HONG THI CHUYEN sang cai ke tiep.
+ *
+ * Phai roi tang chu khong duoc dung han: Gemini tu choi request phat tu edge cua
+ * Cloudflare ("User location is not supported for the API use"), nen ban local chay
+ * ngon lanh con ban deploy chet han. Workers AI dat sau cung lam luoi do vi no chay
+ * ngay tren Cloudflare, khong dinh chan vi tri.
+ */
 async function generateAnswer(
   env: Env,
   messages: Array<{ role: string; content: string }>,
@@ -218,20 +287,44 @@ async function generateAnswer(
   serviceContext: string,
 ): Promise<string | null> {
   if (!messages.length) return null;
-  if (env.OPENAI_API_KEY) return (await callOpenAI(env, messages, pageContext, serviceContext)) ?? null;
-  if (env.GEMINI_API_KEY) return (await callGemini(env, messages, pageContext, serviceContext)) ?? null;
+
+  const providers: Array<[string, () => Promise<string | null | undefined>]> = [];
+  if (env.OPENAI_API_KEY) providers.push(["openai", () => callOpenAI(env, messages, pageContext, serviceContext)]);
+  // Bo qua Gemini khi da biet no chan vi tri may chu nay: thu lai moi request chi ton
+  // them vai giay cho moi cau tra loi, va ket qua luon la that bai.
+  if (env.GEMINI_API_KEY && !await loadGeminiBlocked(env)) {
+    providers.push(["gemini", () => callGemini(env, messages, pageContext, serviceContext)]);
+  }
+  if (env.AI) providers.push(["workers-ai", () => callWorkersAi(env, messages, pageContext, serviceContext)]);
+
+  for (const [name, run] of providers) {
+    try {
+      const answer = await run();
+      if (answer) return answer;
+      console.error(`[ai] ${name} tra ve rong, thu nha cung cap ke tiep`);
+    } catch (error) {
+      console.error(`[ai] ${name} loi: ${String(error).slice(0, 200)} — thu nha cung cap ke tiep`);
+    }
+  }
+
   // Bot DST da co san (ai-chat-worker, Cloudflare Workers AI + kho kien thuc DST).
   // Dat sau cung de khi co khoa rieng thi khoa duoc uu tien, nhung nho no ma he thong
   // chay duoc ngay ma khong phai cau hinh them gi.
   if (env.DST_BOT_URL) {
-    const upstream = await fetch(env.DST_BOT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, pageContext }),
-    });
-    if (!upstream.ok) throw new Error(`DST bot failed: ${upstream.status}`);
-    const data = (await upstream.json()) as { answer?: string };
-    return data.answer ?? null;
+    try {
+      const upstream = await fetch(env.DST_BOT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, pageContext }),
+      });
+      if (!upstream.ok) throw new Error(`DST bot failed: ${upstream.status}`);
+      const data = (await upstream.json()) as { answer?: string };
+      if (data.answer) return data.answer;
+    } catch (error) {
+      // Khong nem ra ngoai: het duong thi tra null de phia goi bao "chua tra loi
+      // duoc" mot cach trung thuc, thay vi thanh loi 502 kho hieu.
+      console.error(`[ai] dst-bot loi: ${String(error).slice(0, 200)}`);
+    }
   }
   return null;
 }

@@ -46,8 +46,9 @@ function serviceBlock() {
     `Phu hop voi: ${service.audience}`,
     `Tu khoa lien quan: ${service.tags.join(", ")}`,
     `Hang muc ban giao: ${service.deliverables.join("; ")}`,
-    `Quy trinh: ${service.process.join(" -> ")}`,
-    ...service.faqs.map((faq) => `Hoi: ${faq.question}\nDap: ${faq.answer}`),
+    // KHONG nhet quy trinh va 12 FAQ cua CA 6 dich vu vao day: prompt phinh len lam
+    // moi cau tra loi mat 16-39 giay. Chi tiet cua dung trang khach dang xem da duoc
+    // truyen rieng qua serviceContext trong tung request.
   ].join("\n")).join("\n\n");
 }
 
@@ -123,6 +124,7 @@ export const DST_KNOWLEDGE = [
 export const DST_SYSTEM_PROMPT = `Ban la tu van vien cua ${companyConfig.name}, tra loi khach ngay tren website cong ty.
 
 # Cach tra loi
+0. BẮT BUỘC: luôn viết tiếng Việt CÓ DẤU đầy đủ, đúng chính tả. Phần kiến thức bên dưới viết không dấu chỉ để tiết kiệm dung lượng — TUYỆT ĐỐI không bắt chước kiểu viết đó khi trả lời khách.
 1. Tieng Viet, xung "DST", goi khach la "anh/chi". Giong nguoi tu van that: chu dong, ro rang, khong may moc.
 2. NGAN: toi da 4 cau hoac 4 gach dau dong. Vao thang cau tra loi, khong nhac lai cau hoi, khong mo bai.
 3. VIET THUONG, KHONG dung markdown. Khong dung dau **, ##, *, hay bang bieu — giao dien chat hien nguyen ky tu do ra man hinh, nhin rat xau.

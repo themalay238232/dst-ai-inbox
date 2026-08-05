@@ -30,6 +30,9 @@ const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
   kv_namespaces: [CONVERSATION_KV],
+  // Workers AI. Bat buoc cho ban deploy: Gemini tu choi request tu edge cua
+  // Cloudflare ("User location is not supported"), con Workers AI thi khong.
+  ai: { binding: "AI" },
   d1_databases: d1
     ? [
         {
@@ -61,6 +64,7 @@ const SERVER_ENV_KEYS = [
   "GEMINI_MODEL",
   "OPENAI_API_KEY",
   "OPENAI_MODEL",
+  "WORKERS_AI_MODEL",
   "DST_BOT_URL",
   "ADMIN_PASSWORD",
   "MESSENGER_WORKER_URL",

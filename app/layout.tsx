@@ -10,14 +10,14 @@ export const metadata: Metadata = {
     template: "%s | DST Group",
   },
   description,
-  metadataBase: new URL("https://theluc205.github.io/websiteDST-ai-chat/"),
+  metadataBase: new URL("https://website-dst-ai-chat.longv7393.workers.dev/"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "DST Group | Marketing, Media & Branding",
     description,
-    url: "https://theluc205.github.io/websiteDST-ai-chat/",
+    url: "https://website-dst-ai-chat.longv7393.workers.dev/",
     siteName: "DST Group Marketing & Media",
     locale: "vi_VN",
     type: "website",
@@ -49,10 +49,13 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
-        <link rel="icon" href="/websiteDST-ai-chat/favicon.svg?v=2" type="image/svg+xml" sizes="any" />
-        <link rel="icon" href="/websiteDST-ai-chat/favicon.png?v=2" type="image/png" sizes="512x512" />
-        <link rel="shortcut icon" href="/websiteDST-ai-chat/favicon.svg?v=2" />
-        <link rel="apple-touch-icon" href="/websiteDST-ai-chat/favicon.png?v=2" />
+        {/* Duong dan tuyet doi tu goc, KHONG kem base path cua GitHub Pages:
+            ban deploy tren Cloudflare Worker nam o goc nen /websiteDST-ai-chat/... se 404.
+            Ban GitHub Pages tu them base path khi build. */}
+        <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml" sizes="any" />
+        <link rel="icon" href="/favicon.png?v=2" type="image/png" sizes="512x512" />
+        <link rel="shortcut icon" href="/favicon.svg?v=2" />
+        <link rel="apple-touch-icon" href="/favicon.png?v=2" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
